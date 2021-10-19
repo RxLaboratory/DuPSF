@@ -1,0 +1,66 @@
+/**
+ * Photoshop ActionManager methods
+ * @namespace
+ */
+var DuPSAM = {}
+
+/**
+ * Gets the value of a property in an ActionDescriptor
+ * @param {ActionDescriptor} descriptor The descriptor
+ * @param {string} propertyName The name of the property
+ * @returns {any} The value
+ */
+DuPSAM.getDescriptorValue = function(descriptor, property)
+{
+    switch (descriptor.getType( property ))
+    {
+        case DescValueType.OBJECTTYPE:
+            return (descriptor.getObjectValue( property ));
+        case DescValueType.LISTTYPE:
+            return descriptor.getList( property );
+        case DescValueType.REFERENCETYPE:
+            return descriptor.getReference( property );
+        case DescValueType.BOOLEANTYPE:
+            return descriptor.getBoolean( property );
+        case DescValueType.STRINGTYPE:
+            return descriptor.getString( property );
+        case DescValueType.INTEGERTYPE:
+            return descriptor.getInteger( property );
+        case DescValueType.LARGEINTEGERTYPE:
+            return descriptor.getLargeInteger( property );
+        case DescValueType.DOUBLETYPE:
+            return descriptor.getDouble( property );
+        case DescValueType.ALIASTYPE:
+            return descriptor.getPath( property );
+        case DescValueType.CLASSTYPE:
+            return descriptor.getClass( property );
+        case DescValueType.UNITDOUBLE:
+            return (descriptor.getUnitDoubleValue( property ));
+        case DescValueType.ENUMERATEDTYPE:
+            return (typeIDToStringID(descriptor.getEnumerationValue( property )));
+        case DescValueType.RAWTYPE:
+            var tempStr = descriptor.getData( property );
+            var rawData = new Array();
+            for (var tempi = 0; tempi < tempStr.length; tempi++) {
+                rawData[tempi] = tempStr.charCodeAt(tempi);
+            }
+            return rawData;
+        default:
+            return null;
+    };
+}
+
+/**
+ * Gets the list of available keys for the current descriptor as strings
+ * @param {ActionDescriptor} descriptor
+ * @returns {string[]}
+ */
+DuPSAM.getDescriptorKeys = function( descriptor )
+{
+    var keys = [];
+    for (var i = 0; i < descriptor.count; i++)
+    {
+        keys.push( typeIDToStringID( descriptor.getKey(i) ));
+    }
+    return keys;
+}

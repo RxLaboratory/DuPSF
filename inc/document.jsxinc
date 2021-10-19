@@ -1,0 +1,124 @@
+/**
+ * Photoshop Document methods
+ * @namespace
+ */
+var DuPSDoc = {};
+
+/**
+ * Gets the active document if any, without throwing any error if there isn't.
+ * @returns {Document|null} The document
+ */
+DuPSDoc.getActiveDoc = function()
+{
+    if (app.documents.length > 0) return app.activeDocument;
+    else return null;
+}
+
+/**
+ * Returns a property from the active document (using the ActionManager)
+ * @param {string} propertyName The name of the property
+ * @returns {any} The value
+ */
+DuPSDoc.getProperty = function( propertyName )
+{
+    var property = stringIDToTypeID( propertyName );
+
+    var ref = new ActionReference();
+    ref.putProperty(stringIDToTypeID("property"), property);
+    ref.putEnumerated(stringIDToTypeID("document"), stringIDToTypeID("ordinal"), stringIDToTypeID("targetEnum"));
+
+    return DuPSAM.getDescriptorValue( executeActionGet(ref), property );
+}
+
+/**
+ * Gets the total number of layers in the document
+ * @returns {int} The number of layers
+ */
+DuPSDoc.numLayers = function()
+{
+    return DuPSDoc.getProperty('numberOfLayers');
+}
+
+/**
+ * Imports (embed) all linked smart objects in the active document
+ */
+DuPSDoc.embedLinkedLayers = function( )
+{
+    var doc = DuPSDoc.getActiveDoc();
+    if (!doc) return;
+
+    DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
+    DuScriptUI.progressBar.msg("Embeding linked smart objects...");
+
+    DuPSLayer.embedLinkedLayers( doc );
+}
+
+/**
+ * Rasterizes all smart objects in the active document
+ */
+DuPSDoc.rasterizeSmartObjects = function( )
+{
+    var doc = DuPSDoc.getActiveDoc();
+    if (!doc) return;
+
+    DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
+    DuScriptUI.progressBar.msg("Rasterizing smart objects...");
+
+    DuPSLayer.rasterizeSmartObjects( doc );
+}
+
+/**
+ * Rasterizes all shape layers in the active document
+ */
+DuPSDoc.rasterizeShapeLayers = function()
+{
+    var doc = DuPSDoc.getActiveDoc();
+    if (!doc) return;
+
+    DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
+    DuScriptUI.progressBar.msg("Rasterizing shape layers...");
+
+    DuPSLayer.rasterizeShapeLayers( doc );
+}
+
+/**
+ * Rasterizes all text layers in the active document
+ */
+DuPSDoc.rasterizeTextLayers = function()
+{
+    var doc = DuPSDoc.getActiveDoc();
+    if (!doc) return;
+
+    DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
+    DuScriptUI.progressBar.msg("Rasterizing text layers...");
+
+    DuPSLayer.rasterizeTextLayers( doc );
+}
+
+/**
+ * Rasterizes all 3D layers in the active document
+ */
+DuPSDoc.rasterize3DLayers = function()
+{
+    var doc = DuPSDoc.getActiveDoc();
+    if (!doc) return;
+
+    DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
+    DuScriptUI.progressBar.msg("Rasterizing 3D layers...");
+
+    DuPSLayer.rasterize3DLayers( doc );
+}
+
+/**
+ * Flattens all adjustment layers in the active document, without changing the appearance of the document.
+ */
+DuPSDoc.flattenAdjustmentLayers = function( visibleOnly, rasterizeTypes )
+{
+    var doc = DuPSDoc.getActiveDoc();
+    if (!doc) return;
+
+    DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
+    DuScriptUI.progressBar.msg("Flattening adjustment layers...");
+
+    DuPSLayer.flattenAdjustmentLayers( doc, visibleOnly, rasterizeTypes );
+}

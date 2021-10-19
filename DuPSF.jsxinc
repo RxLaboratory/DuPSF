@@ -1,0 +1,6 @@
+#include "DuESF/DuESF.jsxinc"
+
+#include "inc/actionManager.jsxinc"
+#include "inc/core.jsxinc"
+#include "inc/document.jsxinc"
+#include "inc/layer.jsxinc"

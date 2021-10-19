@@ -1,0 +1,169 @@
+/* License
+	DuPSF - Duduf Photoshop Framework
+
+	Copyright (c) 2021 Nicolas Dufresne, RxLaboratory
+
+	https://RxLaboratory.org
+
+	This file is part of DuPSF.
+
+		DuPSF is free software: you can redistribute it and/or modify
+		it under the terms of the GNU General Public License as published by
+		the Free Software Foundation, either version 3 of the License, or
+		(at your option) any later version.
+
+		DuPSF is distributed in the hope that it will be useful,
+		but WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+		GNU General Public License for more details.
+
+		You should have received a copy of the GNU General Public License
+		along with DuPSF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * The Duduf Photoshop ExtendScript Framework.<br />
+ * by {@link https://RxLaboratory.org RxLaboratory} and {@link http://duduf.com Duduf}.
+ * @example
+ * // Encapsulate everything to avoid global variables!
+ * (function()
+ * {
+ *      // Include the framework
+ *      #include "DuPSF.jsxinc";
+ *		DuPSF.init("The Script Name", "1.0.0", "RxLab");
+ * })(this);
+ * @namespace
+ * @author Nicolas Dufresne and contributors
+ * @copyright 2021 Nicolas Dufresne, RxLaboratory
+ * @version 0.0.1
+ * @license GPL-3.0 <br />
+ * DuPSF is free software: you can redistribute it and/or modify<br />
+ * it under the terms of the GNU General Public License as published by<br />
+ * the Free Software Foundation, either version 3 of the License, or<br />
+ * (at your option) any later version.<br />
+ *<br />
+ * DuPSF is distributed in the hope that it will be useful,<br />
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of<br />
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<br />
+ * GNU General Public License for more details.<br />
+ *<br />
+ * You should have received a copy of the GNU General Public License<br />
+ * along with DuPSF. If not, see {@link http://www.gnu.org/licenses/}.
+ */
+var DuPSF = {};
+/**
+ * The Current DuPSF Version
+ * @readonly
+ * @memberof DuPSF
+ * @type {string}
+ */
+DuPSF.version = new DuVersion('1.0.0');
+
+/**
+ * This method has to be called once at the very beginning of the script, just after the inclusion of DuPSF <code>#include DuPSF.jsxinc</code>
+ * @param {string} [scriptName="DuAEF"] - The name of your script, as it has to be displayed in the UI and the filesystem
+ * @param {string} [scriptVersion="0.0.0"] - The version of your script, in the form "XX.XX.XX-Comment", for example "1.0.12-Beta". The "-Comment" part is optional.
+ */
+DuPSF.init = function( scriptName, scriptVersion, companyName )
+{
+    DuESF.init(DuESF.HostApplication.PHOTOSHOP, scriptName, scriptVersion, companyName);
+}
+
+// Progress mode info
+DuPSF.progressMode = false;
+DuPSF.propertiesPanel = false;
+DuPSF.layersPanel = false;
+DuPSF.colorPanel = false;
+DuPSF.histogramPanel = false;
+DuPSF.optionsPanel = false;
+DuPSF.channelsPanel = false;
+
+/**
+ * Hides the layer and properties panel and other tweaks to make scripts run faster.
+ * @param {Boolean} [inProgress=true] True to activate, false to deactivate progress mode
+ * @param {Boolean} [showProgressBar=true] Will show a nice progress bar if true
+ */
+DuPSF.setProgressMode = function( inProgress, showProgressBar )
+{
+	inProgress = def (inProgress, true);
+    showProgressBar = def (showProgressBar, true);
+
+	if (showProgressBar && inProgress)
+    {
+        DuScriptUI.progressBar.reset();
+        DuScriptUI.progressBar.show();
+    }
+	else if (showProgressBar) DuScriptUI.progressBar.hide();
+
+	if ( !inProgress && !DuPSF.progressMode ) return;
+
+	if ( inProgress ) {
+		if (!DuPSF.progressMode)
+		{
+			// Hide panels
+
+			// Get current state
+			var ref = new ActionReference();
+			var panels = [];
+			ref.putProperty( charIDToTypeID("Prpr"), stringIDToTypeID("panelList") );
+			ref.putEnumerated( charIDToTypeID("capp"), charIDToTypeID("Ordn"), charIDToTypeID("Trgt") ); 
+			var desc = executeActionGet(ref).getList (stringIDToTypeID("panelList"));
+
+			for(var a = 0; a < desc.count; a++)
+			{
+				var objValue = desc.getObjectValue(a);
+				var visible = objValue.getBoolean(stringIDToTypeID("visible"));
+
+				if  (visible)
+				{
+					var id = objValue.getString(stringIDToTypeID("ID"));
+
+					if (id == "panelid.static.properties")
+					{
+						DuPSF.propertiesPanel = true;
+						runMenuItem(app.stringIDToTypeID("togglePropertiesPanel"));
+					}
+					else if (id == "panelid.static.layers")
+					{
+						DuPSF.layersPanel = true;
+						runMenuItem(app.stringIDToTypeID("toggleLayersPalette"));
+					}
+					else if (id == "panelid.static.picker")
+					{
+						DuPSF.colorPanel = true;
+						runMenuItem(app.stringIDToTypeID("toggleColorPalette"));
+					}
+					else if (id == "panelid.static.histogram")
+					{
+						DuPSF.histogramPanel = true;
+						runMenuItem(app.stringIDToTypeID("toggleHistogramPalette"));
+					}
+					else if (id == "panelid.static.options")
+					{
+						DuPSF.optionsPanel = true;
+						runMenuItem(app.stringIDToTypeID("toggleOptionsPalette"));
+					}
+					else if (id == "panelid.static.channels")
+					{
+						DuPSF.channelsPanel = true;
+						runMenuItem(app.stringIDToTypeID("toggleChannelsPalette"));
+					}
+				}
+			}
+
+		}
+		DuPSF.progressMode = true;
+	}
+	else
+	{
+		// Restore panels
+		if (DuPSF.propertiesPanel) runMenuItem(app.stringIDToTypeID("togglePropertiesPanel"));
+		if (DuPSF.layersPanel) runMenuItem(app.stringIDToTypeID("toggleLayersPalette"));
+		if (DuPSF.colorPanel) runMenuItem(app.stringIDToTypeID("toggleColorPalette"));
+		if (DuPSF.histogramPanel) runMenuItem(app.stringIDToTypeID("toggleHistogramPalette"));
+		if (DuPSF.optionsPanel) runMenuItem(app.stringIDToTypeID("toggleOptionsPalette"));
+		if (DuPSF.channelsPanel) runMenuItem(app.stringIDToTypeID("toggleChannelsPalette"));
+
+		DuPSF.progressMode = false;
+	}
+}

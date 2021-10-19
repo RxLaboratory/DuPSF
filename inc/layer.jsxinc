@@ -1,0 +1,337 @@
+/**
+ * Photoshop Layer methods
+ * @namespace
+ */
+var DuPSLayer = {};
+
+DuPSLayer.actionReference = function( layer )
+{
+    var ref = new ActionReference();
+    ref.putIdentifier( stringIDToTypeID("layer"), layer.id);
+    return ref;
+}
+
+DuPSLayer.actionDescriptor = function( layer )
+{
+    var desc = new ActionDescriptor();
+    desc.putReference( stringIDToTypeID("null"), DuPSLayer.actionReference( layer ) );
+
+    return desc;
+}
+
+/**
+ * Embed the layer if it's a linked smart object
+ * @param {int} layerIndex The index of the layer to embed
+ */
+DuPSLayer.embed = function( layer )
+{
+    // Select
+    DuPSLayer.select( layer );
+
+    // Throws if not linked
+    try { executeAction( stringIDToTypeID('placedLayerConvertToEmbedded'), undefined, DialogModes.NO ); }
+    catch (e) { ; }
+    
+}
+
+/**
+ * Embed all linked smart objects in the layer set
+ * @param {LayerSet|Document} layerSet The layer set
+ */
+DuPSLayer.embedLinkedLayers = function( layerSet )
+{
+    for (var i = 0, n = layerSet.layers.length; i < n; i++)
+    {
+        DuScriptUI.progressBar.hit();
+        var layer = layerSet.layers[i];
+
+        if (layer.typename == 'LayerSet')
+        {
+            DuPSLayer.embedLinkedLayers( layer );
+            continue;
+        }
+
+        if (layer.kind != LayerKind.SMARTOBJECT) continue;
+
+        DuPSLayer.embed( layer );
+    }
+}
+
+/**
+ * Rasterizes all smart objects in the layer set
+ * @param {LayerSet|Document} layerSet The layer set
+ */
+DuPSLayer.rasterizeSmartObjects = function( layerSet )
+{
+    for (var i = 0, n = layerSet.layers.length; i < n; i++)
+    {
+        DuScriptUI.progressBar.hit();
+        var layer = layerSet.layers[i];
+        if (layer.typename == 'LayerSet')
+        {
+            DuPSLayer.rasterizeSmartObjects( layer );
+            continue;
+        }
+
+        if (layer.kind != LayerKind.SMARTOBJECT) continue;
+
+        layer.rasterize( RasterizeType.ENTIRELAYER );
+    }
+}
+
+/**
+ * Rasterizes all shape layers in the layer set
+ * @param {LayerSet|Document} layerSet The layer set
+ */
+DuPSLayer.rasterizeShapeLayers = function( layerSet )
+{
+    for (var i = 0, n = layerSet.layers.length; i < n; i++)
+    {
+        DuScriptUI.progressBar.hit();
+        var layer = layerSet.layers[i];
+        if (layer.typename == 'LayerSet')
+        {
+            DuPSLayer.rasterizeShapeLayers( layer );
+            continue;
+        }
+
+        if (layer.kind != LayerKind.SOLIDFILL && layer.kind != LayerKind.GRADIENTFILL && layer.kind != LayerKind.PATTERNFILL) continue;
+
+        layer.rasterize( RasterizeType.ENTIRELAYER );
+    }
+}
+
+/**
+ * Rasterizes all text layers in the layer set
+ * @param {LayerSet|Document} layerSet The layer set
+ */
+DuPSLayer.rasterizeTextLayers = function( layerSet )
+{
+    for (var i = 0, n = layerSet.layers.length; i < n; i++)
+    {
+        DuScriptUI.progressBar.hit();
+        var layer = layerSet.layers[i];
+        
+        if (layer.typename == 'LayerSet')
+        {
+            DuPSLayer.rasterizeTextLayers( layer );
+            continue;
+        }
+
+        if (layer.kind != LayerKind.TEXT) continue;
+
+        layer.rasterize( RasterizeType.ENTIRELAYER );
+    }
+}
+
+/**
+ * Rasterizes all 3D layers in the layer set
+ * @param {LayerSet|Document} layerSet The layer set
+ */
+DuPSLayer.rasterize3DLayers = function( layerSet )
+{
+    for (var i = 0, n = layerSet.layers.length; i < n; i++)
+    {
+        DuScriptUI.progressBar.hit();
+        var layer = layerSet.layers[i];
+        if (layer.typename == 'LayerSet')
+        {
+            DuPSLayer.rasterize3DLayers( layer );
+            continue;
+        }
+
+        if (layer.kind != LayerKind.LAYER3D) continue;
+
+        layer.rasterize( RasterizeType.ENTIRELAYER );
+    }
+}
+
+DuPSLayer.select = function( layer )
+{
+    var desc = DuPSLayer.actionDescriptor( layer );
+    executeAction( stringIDToTypeID("select"), desc, DialogModes.NO );
+}
+
+DuPSLayer.isAdjustment = function( layer )
+{
+    if (layer.kind == LayerKind.BLACKANDWHITE) return true;
+    if (layer.kind == LayerKind.BRIGHTNESSCONTRAST) return true;
+    if (layer.kind == LayerKind.CHANNELMIXER) return true;
+    if (layer.kind == LayerKind.COLORBALANCE) return true;
+    if (layer.kind == LayerKind.CURVES) return true;
+    if (layer.kind == LayerKind.EXPOSURE) return true;
+    if (layer.kind == LayerKind.GRADIENTMAP) return true;
+    if (layer.kind == LayerKind.HUESATURATION) return true;
+    if (layer.kind == LayerKind.INVERSION) return true;
+    if (layer.kind == LayerKind.LEVELS) return true;
+    if (layer.kind == LayerKind.PHOTOFILTER) return true;
+    if (layer.kind == LayerKind.POSTERIZE) return true;
+    if (layer.kind == LayerKind.SELECTIVECOLOR) return true;
+    if (layer.kind == LayerKind.THRESHOLD) return true;
+    if (layer.kind == LayerKind.VIBRANCE) return true;
+    return false;
+}
+
+/**
+ * Gets the document containing the layer
+ * @param {ArtLayer|LayerSet} layer The layer
+ * @returns {Document}
+ */
+DuPSLayer.document = function( layer )
+{
+    var group = layer;
+    while(group.typename != 'Document') group = group.parent;
+    return group;
+}
+
+/**
+ * Recursively gets all layers in a set, from bottom to top
+ * @param {LayerSet} layerSet The set
+ * @param {ArtLayer|LayerSet} under A layer under which to get other layers
+ * @returns {ArtLayer[]} The layers
+ */
+DuPSLayer.getLayers = function( layerSet, under )
+{
+    under = def(under, null);
+    var layers = [];
+    for (var i = layerSet.layers.length -1; i >= 0; i--)
+    {
+        var layer = layerSet.layers[i];
+
+        // If we're back to the limit layer, it's finished
+        if( layer == under ) break;
+
+        if (layer.typename == 'LayerSet')
+        {
+            layers = layers.concat( DuPSLayer.getLayers(layer, under) );
+        }
+        else
+        {
+            layers.push( layer );
+        }
+    }
+    return layers;
+}
+
+/**
+ * Gets all layers which are influenced by the adjustment layer
+ * @param {ArtLayer} adjustmentLayer The adjustment layer
+ * @returns {ArtLayer[]} The layers
+ */
+DuPSLayer.getInfluencedLayers = function( adjustmentLayer )
+{
+    var layerSet = DuPSLayer.getInfluenceGroup(adjustmentLayer);
+
+    var layers = [];
+
+    for (var i = layerSet.layers.length -1; i >= 0; i--)
+    {
+        var layer = layerSet.layers[i];
+
+        // If we're back to the adjustment layer, it's finished
+        if( layer == adjustmentLayer ) break;
+
+        // Layer set
+        if (layer.typename == 'LayerSet')
+        {
+            layers = layers.concat( DuPSLayer.getLayers(layer, adjustmentLayer) );
+        }
+        else
+        {
+            layers.push( layer );
+        }
+    }
+
+    return layers;
+}
+
+/**
+ * Gets the group in which the adjustment layer has some influence
+ * @param {ArtLayer} adjustmentLayer
+ * @returns {LayerSet|Document} The group where all layers under the adjustment layer are influenced.
+ */
+DuPSLayer.getInfluenceGroup = function( adjustmentLayer )
+{
+    var group = adjustmentLayer.parent;
+    while (true) 
+    {
+        if (group.typename == 'Document') return group;
+        if (group.blendMode != BlendMode.PASSTHROUGH) return group;
+        group = group.parent;
+    }
+}
+
+DuPSLayer.flattenAdjustmentLayers = function( layerSet, visibleOnly, rasterizeTypes )
+{
+    rasterizeTypes = def( rasterizeTypes, [
+        LayerKind.SMARTOBJECT,
+        LayerKind.LAYER3D,
+        LayerKind.SOLIDFILL,
+        LayerKind.GRADIENTFILL,
+        LayerKind.PATTERNFILL,
+        LayerKind.TEXT
+    ] );
+
+    visibleOnly = def(visibleOnly, true);
+
+    var doc = DuPSLayer.document( layerSet );
+
+    // Look for adjustment layers, starting at the bottom
+    for (var i = layerSet.layers.length-1; i >= 0; i--)
+    {
+        DuScriptUI.progressBar.hit();
+        var adjLayer = layerSet.layers[i];
+
+        // Recurse
+        if (adjLayer.typename == 'LayerSet')
+        {
+            DuPSLayer.flattenAdjustmentLayers( adjLayer, visibleOnly, rasterizeTypes );
+            continue;
+        }
+
+        // Not an adjustement
+        if (!DuPSLayer.isAdjustment(adjLayer)) continue;
+        // Not visible
+        if (!adjLayer.visible && visibleOnly) continue;
+
+        // Unlock
+        adjLayer.allLocked = false;
+
+        // Merge on all influenced layers
+        var layers = DuPSLayer.getInfluencedLayers( adjLayer );
+
+        for (var j = 0, n = layers.length; j < n; j++)
+        {
+            var layer = layers[j];
+
+            // Un-clipping layer to be able to insert adjustement layer
+            var grouped = layer.grouped;
+            if (grouped) layer.grouped = false;
+
+            // Rasterize
+            if ( layer.kind != LayerKind.NORMAL )
+            {
+                for (var t = 0; t < rasterizeTypes.length; t++)
+                {
+                    if ( layer.kind == rasterizeTypes[t] )
+                    {
+                        layer.rasterize( RasterizeType.ENTIRELAYER );
+                        break;
+                    }
+                }
+            }
+            if ( layer.kind != LayerKind.NORMAL ) continue;
+                
+            // Duplicate adjustment layer
+            dupAdjLayer = adjLayer.duplicate(layer, ElementPlacement.PLACEBEFORE);
+            // Merge
+            dupAdjLayer.merge();
+
+            // Re-clip
+            if (grouped) layer.grouped = true;
+        }
+        
+        // Delete adjustement layer
+        adjLayer.remove();
+    }
+}

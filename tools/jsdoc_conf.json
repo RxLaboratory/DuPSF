@@ -1,0 +1,31 @@
+{
+    "plugins": [],
+    "recurseDepth": 1,
+    "source": {
+		"include": [ "output/DuPSF.jsxinc" ],
+        "includePattern": ".+\\.jsxinc$",
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+    "sourceType": "script",
+    "tags": {
+        "allowUnknownTags": true,
+        "dictionaries": ["jsdoc","closure"]
+    },
+    "templates": {
+        "cleverLinks": true,
+        "monospaceLinks": false,
+        "copyright"             : "Copyright (c) 2021 RxLaboratory, Nicolas Dufresne and contributors",
+        "includeDate"           : true,
+        "search"                : "true"
+    },
+    "meta": {
+        "title": "DuPSF",
+        "description": "The Duduf Photoshop Framework reference",
+        "keyword": "ExtendScript, Adobe, Photoshop"
+    },
+	"opts": {
+        "template": "node_modules/jaguarjs-jsdoc",
+		"recurse": false,
+        "destination": "../docs"
+    }
+}

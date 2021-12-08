@@ -41,72 +41,87 @@ DuPSDoc.numLayers = function()
 
 /**
  * Imports (embed) all linked smart objects in the active document
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSDoc.embedLinkedLayers = function( )
+DuPSDoc.embedLinkedLayers = function( visibleOnly )
 {
     var doc = DuPSDoc.getActiveDoc();
     if (!doc) return;
+
+    visibleOnly = def(visibleOnly, false);
 
     DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
     DuScriptUI.progressBar.msg("Embeding linked smart objects...");
 
-    DuPSLayer.embedLinkedLayers( doc );
+    DuPSLayer.embedLinkedLayers( doc, visibleOnly );
 }
 
 /**
  * Rasterizes all smart objects in the active document
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSDoc.rasterizeSmartObjects = function( )
+DuPSDoc.rasterizeSmartObjects = function( visibleOnly )
 {
     var doc = DuPSDoc.getActiveDoc();
     if (!doc) return;
+
+    visibleOnly = def(visibleOnly, false);
 
     DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
     DuScriptUI.progressBar.msg("Rasterizing smart objects...");
 
-    DuPSLayer.rasterizeSmartObjects( doc );
+    DuPSLayer.rasterizeSmartObjects( doc, visibleOnly );
 }
 
 /**
  * Rasterizes all shape layers in the active document
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSDoc.rasterizeShapeLayers = function()
+DuPSDoc.rasterizeShapeLayers = function( visibleOnly )
 {
     var doc = DuPSDoc.getActiveDoc();
     if (!doc) return;
+
+    visibleOnly = def(visibleOnly, false);
 
     DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
     DuScriptUI.progressBar.msg("Rasterizing shape layers...");
 
-    DuPSLayer.rasterizeShapeLayers( doc );
+    DuPSLayer.rasterizeShapeLayers( doc, visibleOnly );
 }
 
 /**
  * Rasterizes all text layers in the active document
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSDoc.rasterizeTextLayers = function()
+DuPSDoc.rasterizeTextLayers = function( visibleOnly )
 {
     var doc = DuPSDoc.getActiveDoc();
     if (!doc) return;
+
+    visibleOnly = def(visibleOnly, false);
 
     DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
     DuScriptUI.progressBar.msg("Rasterizing text layers...");
 
-    DuPSLayer.rasterizeTextLayers( doc );
+    DuPSLayer.rasterizeTextLayers( doc, visibleOnly );
 }
 
 /**
  * Rasterizes all 3D layers in the active document
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSDoc.rasterize3DLayers = function()
+DuPSDoc.rasterize3DLayers = function( visibleOnly )
 {
     var doc = DuPSDoc.getActiveDoc();
     if (!doc) return;
 
+    visibleOnly = def(visibleOnly, false);
+
     DuScriptUI.progressBar.addMax( DuPSDoc.numLayers() );
     DuScriptUI.progressBar.msg("Rasterizing 3D layers...");
 
-    DuPSLayer.rasterize3DLayers( doc );
+    DuPSLayer.rasterize3DLayers( doc, visibleOnly );
 }
 
 /**

@@ -37,13 +37,19 @@ DuPSLayer.embed = function( layer )
 /**
  * Embed all linked smart objects in the layer set
  * @param {LayerSet|Document} layerSet The layer set
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSLayer.embedLinkedLayers = function( layerSet )
+DuPSLayer.embedLinkedLayers = function( layerSet, visibleOnly )
 {
+    visibleOnly = def(visibleOnly, false);
+
     for (var i = 0, n = layerSet.layers.length; i < n; i++)
     {
         DuScriptUI.progressBar.hit();
         var layer = layerSet.layers[i];
+
+        // Not visible
+        if (!layer.visible && visibleOnly) continue;
 
         if (layer.typename == 'LayerSet')
         {
@@ -60,13 +66,20 @@ DuPSLayer.embedLinkedLayers = function( layerSet )
 /**
  * Rasterizes all smart objects in the layer set
  * @param {LayerSet|Document} layerSet The layer set
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSLayer.rasterizeSmartObjects = function( layerSet )
+DuPSLayer.rasterizeSmartObjects = function( layerSet, visibleOnly )
 {
+    visibleOnly = def(visibleOnly, false);
+
     for (var i = 0, n = layerSet.layers.length; i < n; i++)
     {
         DuScriptUI.progressBar.hit();
         var layer = layerSet.layers[i];
+        
+        // Not visible
+        if (!layer.visible && visibleOnly) continue;
+
         if (layer.typename == 'LayerSet')
         {
             DuPSLayer.rasterizeSmartObjects( layer );
@@ -82,20 +95,27 @@ DuPSLayer.rasterizeSmartObjects = function( layerSet )
 /**
  * Rasterizes all shape layers in the layer set
  * @param {LayerSet|Document} layerSet The layer set
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSLayer.rasterizeShapeLayers = function( layerSet )
+DuPSLayer.rasterizeShapeLayers = function( layerSet, visibleOnly )
 {
+    visibleOnly = def(visibleOnly, false);
+
     for (var i = 0, n = layerSet.layers.length; i < n; i++)
     {
         DuScriptUI.progressBar.hit();
         var layer = layerSet.layers[i];
+
+        // Not visible
+        if (!layer.visible && visibleOnly) continue;
+
         if (layer.typename == 'LayerSet')
         {
             DuPSLayer.rasterizeShapeLayers( layer );
             continue;
         }
 
-        if (layer.kind != LayerKind.SOLIDFILL && layer.kind != LayerKind.GRADIENTFILL && layer.kind != LayerKind.PATTERNFILL) continue;
+        if (!DuPSLayer.isShape(layer)) continue;
 
         layer.rasterize( RasterizeType.ENTIRELAYER );
     }
@@ -104,13 +124,19 @@ DuPSLayer.rasterizeShapeLayers = function( layerSet )
 /**
  * Rasterizes all text layers in the layer set
  * @param {LayerSet|Document} layerSet The layer set
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSLayer.rasterizeTextLayers = function( layerSet )
+DuPSLayer.rasterizeTextLayers = function( layerSet, visibleOnly )
 {
+    visibleOnly = def(visibleOnly, false);
+
     for (var i = 0, n = layerSet.layers.length; i < n; i++)
     {
         DuScriptUI.progressBar.hit();
         var layer = layerSet.layers[i];
+
+        // Not visible
+        if (!layer.visible && visibleOnly) continue;
         
         if (layer.typename == 'LayerSet')
         {
@@ -127,13 +153,20 @@ DuPSLayer.rasterizeTextLayers = function( layerSet )
 /**
  * Rasterizes all 3D layers in the layer set
  * @param {LayerSet|Document} layerSet The layer set
+ * @param {Boolean} [visibleOnly=false] Set to true to embed only visible layers
  */
-DuPSLayer.rasterize3DLayers = function( layerSet )
+DuPSLayer.rasterize3DLayers = function( layerSet, visibleOnly )
 {
+    visibleOnly = def(visibleOnly, false);
+
     for (var i = 0, n = layerSet.layers.length; i < n; i++)
     {
         DuScriptUI.progressBar.hit();
         var layer = layerSet.layers[i];
+
+        // Not visible
+        if (!layer.visible && visibleOnly) continue;
+
         if (layer.typename == 'LayerSet')
         {
             DuPSLayer.rasterize3DLayers( layer );
@@ -170,6 +203,11 @@ DuPSLayer.isAdjustment = function( layer )
     if (layer.kind == LayerKind.THRESHOLD) return true;
     if (layer.kind == LayerKind.VIBRANCE) return true;
     return false;
+}
+
+DuPSLayer.isShape = function( layer )
+{
+    return layer.kind == LayerKind.SOLIDFILL || layer.kind == LayerKind.GRADIENTFILL || layer.kind == LayerKind.PATTERNFILL;
 }
 
 /**
@@ -282,6 +320,9 @@ DuPSLayer.flattenAdjustmentLayers = function( layerSet, visibleOnly, rasterizeTy
         DuScriptUI.progressBar.hit();
         var adjLayer = layerSet.layers[i];
 
+        // Not visible
+        if (!adjLayer.visible && visibleOnly) continue;
+
         // Recurse
         if (adjLayer.typename == 'LayerSet')
         {
@@ -291,9 +332,7 @@ DuPSLayer.flattenAdjustmentLayers = function( layerSet, visibleOnly, rasterizeTy
 
         // Not an adjustement
         if (!DuPSLayer.isAdjustment(adjLayer)) continue;
-        // Not visible
-        if (!adjLayer.visible && visibleOnly) continue;
-
+        
         // Unlock
         adjLayer.allLocked = false;
 
